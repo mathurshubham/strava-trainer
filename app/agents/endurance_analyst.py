@@ -1,0 +1,31 @@
+"""[8] Endurance Analyst — LLM. Never sees raw API JSON, only the computed
+EnduranceWorkoutContext. PRD §3.3, §4.2 output contract."""
+from __future__ import annotations
+
+from app.clients.gemini import GeminiClient
+from app.models.agent_io import EnduranceAnalysis
+from app.models.workout import EnduranceWorkoutContext
+from app.prompts.loader import load_prompt
+
+
+class EnduranceAnalystAgent:
+    def __init__(self, gemini: GeminiClient, model: str) -> None:
+        self._gemini = gemini
+        self._model = model
+
+    def analyze(
+        self,
+        *,
+        context: EnduranceWorkoutContext,
+        recent_history_json: str,
+        raw_activity_text: str,
+        training_goal: str,
+    ) -> EnduranceAnalysis:
+        prompt = load_prompt(
+            "endurance_analyst",
+            training_goal=training_goal,
+            workout_context_json=context.model_dump_json(indent=2),
+            recent_history_json=recent_history_json,
+            raw_activity_text=raw_activity_text[:2000],
+        )
+        return self._gemini.generate_structured(model=self._model, prompt=prompt, response_schema=EnduranceAnalysis, max_retries=1)

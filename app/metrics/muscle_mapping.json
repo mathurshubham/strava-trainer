@@ -1,0 +1,597 @@
+{
+  "_comment": "Keys are normalized exercise names (lowercase, equipment in parens stripped, non-alphanumerics -> underscore). primary muscles weight 1.0, secondary weight 0.5. Edit freely as your exercise vocabulary grows \u2014 the parser logs a warning (not a crash) for anything unmapped.",
+  "ab_wheel_rollout": {
+    "primary": [
+      "core"
+    ],
+    "secondary": [
+      "shoulders"
+    ]
+  },
+  "arnold_press": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "triceps"
+    ]
+  },
+  "back_extension": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "glutes"
+    ]
+  },
+  "barbell_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps",
+      "forearms"
+    ]
+  },
+  "bench_press": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "triceps",
+      "shoulders"
+    ]
+  },
+  "bicep_curl": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "bulgarian_split_squat": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "cable_crunch": {
+    "primary": [
+      "core"
+    ],
+    "secondary": []
+  },
+  "cable_curl": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": []
+  },
+  "cable_fly": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": []
+  },
+  "cable_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "calf_raise": {
+    "primary": [
+      "calves"
+    ],
+    "secondary": []
+  },
+  "chest_fly": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": []
+  },
+  "chest_press": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "triceps",
+      "shoulders"
+    ]
+  },
+  "chest_supported_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "chin_up": {
+    "primary": [
+      "back",
+      "biceps"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "close_grip_bench_press": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": [
+      "chest"
+    ]
+  },
+  "concentration_curl": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": []
+  },
+  "crunch": {
+    "primary": [
+      "core"
+    ],
+    "secondary": []
+  },
+  "deadlift": {
+    "primary": [
+      "back",
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary": [
+      "forearms",
+      "core"
+    ]
+  },
+  "decline_bench_press": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "triceps"
+    ]
+  },
+  "dip": {
+    "primary": [
+      "chest",
+      "triceps"
+    ],
+    "secondary": [
+      "shoulders"
+    ]
+  },
+  "dumbbell_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "face_pull": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "back"
+    ]
+  },
+  "farmers_carry": {
+    "primary": [
+      "forearms"
+    ],
+    "secondary": [
+      "core",
+      "traps"
+    ]
+  },
+  "front_raise": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": []
+  },
+  "front_squat": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": [
+      "glutes",
+      "core"
+    ]
+  },
+  "glute_bridge": {
+    "primary": [
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "goblet_squat": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "core"
+    ]
+  },
+  "good_morning": {
+    "primary": [
+      "hamstrings",
+      "back"
+    ],
+    "secondary": [
+      "glutes"
+    ]
+  },
+  "hack_squat": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": [
+      "glutes"
+    ]
+  },
+  "hammer_curl": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "hanging_leg_raise": {
+    "primary": [
+      "core"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "hip_abduction": {
+    "primary": [
+      "glutes"
+    ],
+    "secondary": []
+  },
+  "hip_adduction": {
+    "primary": [
+      "glutes"
+    ],
+    "secondary": []
+  },
+  "hip_thrust": {
+    "primary": [
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "hyperextension": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "glutes",
+      "hamstrings"
+    ]
+  },
+  "incline_bench_press": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "shoulders",
+      "triceps"
+    ]
+  },
+  "incline_chest_press": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "shoulders"
+    ]
+  },
+  "lat_pulldown": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "lateral_raise": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": []
+  },
+  "leg_curl": {
+    "primary": [
+      "hamstrings"
+    ],
+    "secondary": []
+  },
+  "leg_extension": {
+    "primary": [
+      "quads"
+    ],
+    "secondary": []
+  },
+  "leg_press": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "lunge": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "lying_leg_curl": {
+    "primary": [
+      "hamstrings"
+    ],
+    "secondary": []
+  },
+  "overhead_press": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "triceps",
+      "core"
+    ]
+  },
+  "overhead_tricep_extension": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": []
+  },
+  "pec_deck": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": []
+  },
+  "plank": {
+    "primary": [
+      "core"
+    ],
+    "secondary": []
+  },
+  "preacher_curl": {
+    "primary": [
+      "biceps"
+    ],
+    "secondary": []
+  },
+  "pull_up": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps",
+      "forearms"
+    ]
+  },
+  "push_press": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "triceps",
+      "quads"
+    ]
+  },
+  "push_up": {
+    "primary": [
+      "chest"
+    ],
+    "secondary": [
+      "triceps",
+      "shoulders",
+      "core"
+    ]
+  },
+  "rack_pull": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "hamstrings",
+      "forearms"
+    ]
+  },
+  "rear_delt_fly": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "back"
+    ]
+  },
+  "romanian_deadlift": {
+    "primary": [
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary": [
+      "back"
+    ]
+  },
+  "russian_twist": {
+    "primary": [
+      "core"
+    ],
+    "secondary": []
+  },
+  "seated_calf_raise": {
+    "primary": [
+      "calves"
+    ],
+    "secondary": []
+  },
+  "seated_leg_curl": {
+    "primary": [
+      "hamstrings"
+    ],
+    "secondary": []
+  },
+  "seated_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "shoulder_press": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "triceps"
+    ]
+  },
+  "shrug": {
+    "primary": [
+      "traps"
+    ],
+    "secondary": [
+      "forearms"
+    ]
+  },
+  "sit_up": {
+    "primary": [
+      "core"
+    ],
+    "secondary": []
+  },
+  "skull_crusher": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": []
+  },
+  "squat": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings",
+      "core"
+    ]
+  },
+  "step_up": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "stiff_leg_deadlift": {
+    "primary": [
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary": [
+      "back"
+    ]
+  },
+  "sumo_deadlift": {
+    "primary": [
+      "glutes",
+      "hamstrings"
+    ],
+    "secondary": [
+      "back"
+    ]
+  },
+  "t_bar_row": {
+    "primary": [
+      "back"
+    ],
+    "secondary": [
+      "biceps"
+    ]
+  },
+  "tricep_dip": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": [
+      "chest"
+    ]
+  },
+  "tricep_extension": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": []
+  },
+  "tricep_pushdown": {
+    "primary": [
+      "triceps"
+    ],
+    "secondary": []
+  },
+  "upright_row": {
+    "primary": [
+      "shoulders"
+    ],
+    "secondary": [
+      "traps"
+    ]
+  },
+  "walking_lunge": {
+    "primary": [
+      "quads",
+      "glutes"
+    ],
+    "secondary": [
+      "hamstrings"
+    ]
+  },
+  "wood_chop": {
+    "primary": [
+      "core"
+    ],
+    "secondary": [
+      "shoulders"
+    ]
+  },
+  "wrist_curl": {
+    "primary": [
+      "forearms"
+    ],
+    "secondary": []
+  }
+}
