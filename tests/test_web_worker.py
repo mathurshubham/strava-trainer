@@ -104,9 +104,25 @@ class FakeExerciseHistory:
         self.recorded = []
         self.bests_by_key: dict = {}
         self.previous_by_key: dict = {}
+        self.e1rm_series_by_key: dict = {}
+        self.volume_series: list = []
+        self.pr_timeline: list = []
+        self.session_dates: list = []
 
     def get_previous_occurrence(self, exercise_key, before):
         return self.previous_by_key.get(exercise_key)
+
+    def get_e1rm_series(self, exercise_key):
+        return self.e1rm_series_by_key.get(exercise_key, [])
+
+    def get_volume_series(self):
+        return self.volume_series
+
+    def get_pr_timeline(self):
+        return self.pr_timeline
+
+    def get_session_dates(self):
+        return self.session_dates
 
     def get_exercise_bests(self, exercise_key):
         return self.bests_by_key.get(exercise_key, ExerciseBests())
@@ -466,3 +482,83 @@ def test_conversation_turn_actually_sends_fetched_data_to_the_llm():
     conversation_prompt = next(text for schema, text in deps._gemini_calls if schema is ConversationReply)
     assert "100.0" in conversation_prompt or "100" in conversation_prompt
     assert conversation_prompt.count('"{}"') == 0  # the old bug: fetched_data_json hardcoded to an empty object
+
+
+def _chart_deps(telegram, history, selection):
+    """A conversation turn that wants a chart for the bench press: orchestrator
+    sets needs_chart, chart agent returns `selection`."""
+    return _make_deps(
+        FakeStrava({}), telegram, exercise_history=history,
+        gemini_responses={
+            OrchestratorOutput: OrchestratorOutput(
+                intent=Intent.QUESTION_ABOUT_WORKOUT, target_entity=TargetEntity(type="exercise", ref="bench press"),
+                needs_data=["exercise_history"], needs_chart=True, resolved_pronouns=[], route_to="chart",
+            ),
+            ChartSelection: selection,
+            # Present so the text-fallback branch can also complete without a KeyError.
+            ConversationReply: ConversationReply(reply_markdown="I can't chart that one yet.", updated_focus=None),
+        },
+    )
+
+
+def test_chart_turn_sends_a_photo_when_data_exists():
+    history = FakeExerciseHistory()
+    history.e1rm_series_by_key["bench_press"] = [
+        (datetime(2026, 7, 1, tzinfo=timezone.utc), 100.0),
+        (datetime(2026, 7, 8, tzinfo=timezone.utc), 102.5),
+        (datetime(2026, 7, 15, tzinfo=timezone.utc), 105.0),
+    ]
+    telegram = FakeTelegram()
+    deps = _chart_deps(telegram, history, ChartSelection(chart_id="s03_e1rm_trend", params=[], caption="Bench e1RM climbing"))
+
+    _post({"kind": "telegram_update", "update": {"message": {"chat": {"id": 111}, "text": "chart my bench progress"}}}, deps)
+
+    assert len(telegram.sent_photos) == 1
+    chat_id, caption_html = telegram.sent_photos[0]
+    assert chat_id == 111
+    assert "Bench e1RM climbing" in caption_html
+    assert telegram.sent_markdown == []  # no text reply when a chart was sent
+
+
+def test_chart_turn_falls_back_to_text_when_history_too_thin():
+    history = FakeExerciseHistory()
+    history.e1rm_series_by_key["bench_press"] = [(datetime(2026, 7, 1, tzinfo=timezone.utc), 100.0)]  # only 1 point
+    telegram = FakeTelegram()
+    deps = _chart_deps(telegram, history, ChartSelection(chart_id="s03_e1rm_trend", params=[], caption="Bench e1RM"))
+
+    _post({"kind": "telegram_update", "update": {"message": {"chat": {"id": 111}, "text": "chart my bench progress"}}}, deps)
+
+    assert telegram.sent_photos == []
+    assert telegram.sent_markdown[0][1] == "I can't chart that one yet."
+
+
+def test_chart_turn_falls_back_to_text_for_unwired_chart_id():
+    history = FakeExerciseHistory()
+    telegram = FakeTelegram()
+    deps = _chart_deps(telegram, history, ChartSelection(chart_id="e06_run_overlay", params=[], caption="Run overlay"))
+
+    _post({"kind": "telegram_update", "update": {"message": {"chat": {"id": 111}, "text": "chart my run"}}}, deps)
+
+    assert telegram.sent_photos == []
+    assert telegram.sent_markdown[0][1] == "I can't chart that one yet."
+
+
+def test_non_chart_turn_never_sends_a_photo():
+    history = FakeExerciseHistory()
+    history.bests_by_key["bench_press"] = ExerciseBests(heaviest_weight_kg=100.0)
+    telegram = FakeTelegram()
+    deps = _make_deps(
+        FakeStrava({}), telegram, exercise_history=history,
+        gemini_responses={
+            OrchestratorOutput: OrchestratorOutput(
+                intent=Intent.QUESTION_ABOUT_WORKOUT, target_entity=TargetEntity(type="exercise", ref="bench press"),
+                needs_data=["exercise_history"], needs_chart=False, resolved_pronouns=[], route_to="conversation",
+            ),
+            ConversationReply: ConversationReply(reply_markdown="Your bench PR is 100kg.", updated_focus=None),
+        },
+    )
+
+    _post({"kind": "telegram_update", "update": {"message": {"chat": {"id": 111}, "text": "what's my bench PR?"}}}, deps)
+
+    assert telegram.sent_photos == []
+    assert telegram.sent_markdown[0][1] == "Your bench PR is 100kg."

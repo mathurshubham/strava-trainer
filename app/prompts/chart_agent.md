@@ -5,7 +5,7 @@ Context:
 {session_context}
 ```
 
-Available data for this turn (which of these chart_ids you can actually use depends on what's present):
+Available data for this turn — this is the list of `chart_id`s that can actually be rendered right now. Strongly prefer picking one of these exact ids; anything else will silently fall back to a text reply. (Note: `s02_volume_trend` covers lifting sessions only.)
 ```
 {available_data_keys_json}
 ```
