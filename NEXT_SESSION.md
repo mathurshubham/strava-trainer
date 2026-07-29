@@ -68,6 +68,8 @@ Two things to know about that:
 - If a classification comes out wrong, there's no bot command to fix it yet. Override it directly: `LearnedMuscleMapRepo(db).save(key, name, primary, secondary, source="manual")` — `source="manual"` is protected from being overwritten by later auto-resolves.
 - Check what it has learned with `SELECT display_name, primary_groups, secondary_groups FROM learned_exercise_muscles;`
 
-## Still a real gap: charts never actually render inside a conversation
+## Charts in a conversation: wired (v1), was a gap
 
-The orchestrator now correctly sets `needs_chart`/`route_to="chart"` and `ChartAgent.select()` works (verified live), but `app/web/worker.py::_handle_conversation_turn` never checks either field or calls `deps.chart_agent` — a message like "chart my bench progress" gets a text-only reply, no photo. Wiring this up (call `chart_agent.select()` when `route.needs_chart`, render via the matching `app/charts/*` function, `send_photo`) is the natural next follow-up in the same vein as tonight's fixes.
+**Closed 2026-07-30** (see DECISIONS.md). `_handle_conversation_turn` now handles `needs_chart`/`route_to == "chart"` (and the 📊 button): it calls `ChartAgent.select()`, dispatches through `app/agents/chart_dispatch.py::render_selected_chart`, and `send_photo`s the PNG with the LLM caption. Falls back to text when the chart isn't wired or history is thin.
+
+v1 renders four ids only — `s03_e1rm_trend`, `s02_volume_trend`, `s08_pr_timeline`, `s12_frequency_heatmap`. **Follow-up**: wire more of the 24 ids (endurance `e0x`, cross `x0x`), each needing its own data provider + repo query. Verify live in Telegram once deployed.

@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol
 
 from app.agents.chart_agent import ChartAgent
+from app.agents.chart_dispatch import has_exercise_context, render_selected_chart
 from app.agents.conversation import ConversationAgent
 from app.agents.data_agent import build_endurance_context, build_strength_context
 from app.agents.endurance_analyst import EnduranceAnalystAgent
@@ -29,6 +30,7 @@ from app.metrics.muscle_mapping import normalize_exercise_name
 from app.models.agent_io import OrchestratorOutput
 from app.models.enums import FocusType
 from app.models.session import EntityRef, FocusRef, Turn
+from app.render.telegram import markdown_to_telegram_html, sanitize_telegram_html
 from app.security.auth import verify_qstash_signature
 from app.storage.db import Database
 from app.storage.event_log import EventLog
@@ -410,6 +412,42 @@ def _fetch_data_for_turn(route: OrchestratorOutput, deps: WorkerDeps) -> dict:
     return {}
 
 
+def _caption_html(caption: str) -> str:
+    """LLM caption (restricted markdown) -> sanitized Telegram HTML. send_photo
+    does not convert markdown itself and only length-caps to 1024 chars."""
+    caption = (caption or "").strip()
+    if not caption:
+        return ""
+    return sanitize_telegram_html(markdown_to_telegram_html(caption))
+
+
+def _maybe_send_chart(text: str, chat_id: int, route: OrchestratorOutput, state, session_context: str, deps: WorkerDeps) -> bool:
+    """Pick a chart, render it, and send it as a photo. Returns True if a photo
+    was sent; False (no data / unwired chart) means the caller replies in text."""
+    has_exercise = has_exercise_context(route, state)
+    available = (
+        ["s03_e1rm_trend", "s08_pr_timeline"]
+        if has_exercise
+        else ["s02_volume_trend", "s08_pr_timeline", "s12_frequency_heatmap"]
+    )
+    selection = deps.chart_agent.select(
+        session_context=session_context,
+        available_data_keys_json=json.dumps(available),
+        trigger_reason=text,
+        default_chart_id="s03_e1rm_trend" if has_exercise else "s02_volume_trend",
+    )
+    png = render_selected_chart(selection, route, state, deps)
+    if png is None:
+        return False
+
+    deps.telegram.send_photo(chat_id, png, caption_html=_caption_html(selection.caption) or "Here's your chart.")
+    now = datetime.now(timezone.utc).timestamp()
+    state.push_turn(Turn(role="user", text=text, ts=now, intent=route.intent))
+    state.push_turn(Turn(role="assistant", text=f"[sent chart: {selection.chart_id}]", ts=now))
+    deps.session_manager.save(state)
+    return True
+
+
 def _handle_conversation_turn(text: str, chat_id: int, deps: WorkerDeps) -> None:
     profile = deps.profile_repo.get()
     state, is_new = deps.session_manager.get_or_create(chat_id)
@@ -423,6 +461,14 @@ def _handle_conversation_turn(text: str, chat_id: int, deps: WorkerDeps) -> None
 
     for resolved in route.resolved_pronouns:
         state.push_entity(EntityRef(type="resolved", ref=resolved.resolved_to, label=resolved.resolved_to, ts=datetime.now(timezone.utc).timestamp()))
+
+    # Chart-needing turns (free text or the 📊 button, which arrives as "[chart]")
+    # select + render + send a photo; if no chart can be produced we fall through
+    # to the normal text reply.
+    if (route.needs_chart or route.route_to == "chart" or text == "[chart]") and _maybe_send_chart(
+        text, chat_id, route, state, session_context, deps
+    ):
+        return
 
     fetched_data = _fetch_data_for_turn(route, deps)
 

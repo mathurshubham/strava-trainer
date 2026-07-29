@@ -11,9 +11,10 @@ that module needs.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from app.metrics.muscle_mapping import normalize_exercise_name
+from app.metrics.strength import best_e1rm, build_set_record
 from app.models.enums import SetType
 from app.models.history import ExerciseBests, PreviousOccurrence, SessionBests
 from app.models.parsed import RawParsedSet
@@ -21,6 +22,27 @@ from app.models.workout import EnduranceWorkoutContext, StrengthWorkoutContext
 from app.storage.db import Database
 
 SESSION_PR_KEY = "__session__"
+
+
+def e1rm_series_from_rows(rows: list[tuple]) -> list[tuple[datetime, float]]:
+    """Pure shaping for get_e1rm_series: `(start_date, weight_kg, reps, set_type)`
+    rows (already ordered by date, set_index) -> one `(start_date, best_e1rm)`
+    point per session that has one. Kept DB-free so it's unit-testable without a
+    live Postgres; the e1RM math reuses the pure metrics helpers (best_e1rm
+    filters warmups internally)."""
+    by_session: dict[datetime, list[RawParsedSet]] = {}
+    for start_date, weight_kg, reps, set_type in rows:
+        by_session.setdefault(start_date, []).append(
+            RawParsedSet(weight_kg=weight_kg, reps=reps, set_type=SetType(set_type))
+        )
+
+    series: list[tuple[datetime, float]] = []
+    for start_date in sorted(by_session):
+        records = [build_set_record(s, i) for i, s in enumerate(by_session[start_date])]
+        value = best_e1rm(records)
+        if value is not None:
+            series.append((start_date, value))
+    return series
 
 
 class ExerciseHistoryRepo:
@@ -91,6 +113,65 @@ class ExerciseHistoryRepo:
                 (SESSION_PR_KEY,),
             ).fetchone()
         return SessionBests(highest_session_volume_kg=row[0] if row else None)
+
+    def get_e1rm_series(self, exercise_key: str) -> list[tuple[datetime, float]]:
+        """Per-session best estimated 1RM for one exercise, over time — backs the
+        `s03_e1rm_trend` chart. Mirrors get_previous_occurrence's set fetch, but
+        across every session; the e1RM arithmetic reuses the pure metrics helpers
+        (best_e1rm filters warmups internally), so no math happens in SQL here."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT a.start_date, es.weight_kg, es.reps, es.set_type
+                FROM exercise_sets es JOIN activities a ON a.strava_id = es.strava_id
+                WHERE es.exercise_template_key = %s
+                ORDER BY a.start_date, es.set_index
+                """,
+                (exercise_key,),
+            ).fetchall()
+        return e1rm_series_from_rows(rows)
+
+    def get_volume_series(self) -> list[tuple[datetime, float]]:
+        """Per-session total working volume over time — backs `s02_volume_trend`.
+        The total_volume_kg metric row is only written for strength sessions, so
+        this series is lifting-only (endurance activities carry no volume)."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT a.start_date, m.metric_value
+                FROM metrics m JOIN activities a ON a.strava_id = m.source_id
+                WHERE m.metric_key = 'total_volume_kg' AND m.source_type = 'activity'
+                ORDER BY a.start_date
+                """,
+            ).fetchall()
+        return [(start_date, float(value)) for start_date, value in rows]
+
+    def get_pr_timeline(self) -> list[tuple[datetime, str, float]]:
+        """(date, display-name, value) for weight/e1RM PRs — backs `s08_pr_timeline`.
+        The exercise name is pulled via a scalar subquery (a plain join to
+        exercise_sets would multiply one PR into many set rows). The record_type
+        filter already excludes the __session__ synthetic key."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT pr.achieved_at,
+                       (SELECT exercise_name FROM exercise_sets
+                        WHERE exercise_template_key = pr.exercise_template_key LIMIT 1) AS label,
+                       pr.value
+                FROM personal_records pr
+                WHERE pr.record_type IN ('heaviest_weight', 'best_e1rm')
+                ORDER BY pr.achieved_at
+                """,
+            ).fetchall()
+        return [(achieved_at, label or "exercise", float(value)) for achieved_at, label, value in rows]
+
+    def get_session_dates(self) -> list[date]:
+        """Dates of logged weight-training sessions — backs `s12_frequency_heatmap`."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                "SELECT start_date::date FROM activities WHERE sport_type = 'WeightTraining' ORDER BY start_date",
+            ).fetchall()
+        return [row[0] for row in rows]
 
     def record_strength_session(self, *, activity_raw_json: dict, context: StrengthWorkoutContext) -> None:
         with self._db.connection() as conn:
